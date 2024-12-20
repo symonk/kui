@@ -1,10 +1,15 @@
 LANGCI := $(shell command -v golangci-lint 2> /dev/null) 
+BINARY_NAME := kui
 
 ## help: print this help message.
 .PHONY: help
 help:
 	@echo 'Usage:'
 	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' | sed -e 's/^/ /'
+
+## build: build the binary.
+build:
+	go build -o dist/${BINARY_NAME}
 
 ## test: execute all unit tests.
 .PHONY: test
