@@ -25,7 +25,7 @@ func New(cfgMap kafka.ConfigMap) (*Client, error) {
 // FetchTopicsMetaData fetches information on all topics.
 // including their partition setups.
 func (c *Client) FetchTopics() []kafka.TopicMetadata {
-	meta, err := c.client.GetMetadata(nil, false, 5000)
+	meta, err := c.client.GetMetadata(nil, false, 2000)
 	if err != nil {
 		return nil
 	}
