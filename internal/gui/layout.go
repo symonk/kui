@@ -3,10 +3,12 @@ package gui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/symonk/kui/internal/kafka"
 )
 
 // AppModel encapsulates the frontend state of the application.
 type AppModel struct {
+	client   *kafka.Client
 	choices  []string
 	cursor   int
 	selected map[int]struct{}
@@ -14,8 +16,9 @@ type AppModel struct {
 
 // New returns a new pointer to an AppModel instance configured for the
 // application.
-func New() *AppModel {
+func New(client *kafka.Client) *AppModel {
 	return &AppModel{
+		client:   client,
 		choices:  []string{"One", "Two", "Three"},
 		selected: make(map[int]struct{}),
 	}

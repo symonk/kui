@@ -12,10 +12,19 @@ type Client struct {
 
 // New instantiates a new instance of the kafka client and connects
 // to the brokers specified in the bootstrap servers.
-func New() (*Client, error) {
-	c, err := kafka.NewAdminClient(&kafka.ConfigMap{})
+func New(cfgMap kafka.ConfigMap) (*Client, error) {
+	c, err := kafka.NewAdminClient(&cfgMap)
 	if err != nil {
 		return nil, err
 	}
-	return &Client{client: c}, nil
+	client := &Client{client: c}
+	client.WaitForBrokerConnection()
+	return client, nil
+}
+
+func (c *Client) WaitForBrokerConnection() error {
+	if _, err := c.client.GetMetadata(nil, false, 5000); err != nil {
+		return err
+	}
+	return nil
 }

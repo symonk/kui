@@ -18,12 +18,14 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/symonk/kui/internal/env"
 	"github.com/symonk/kui/internal/gui"
+	"github.com/symonk/kui/internal/kafka"
 )
 
 const (
@@ -39,7 +41,12 @@ var rootCmd = &cobra.Command{
 	Use:   "kui",
 	Short: "A terminal ui for manging kafka",
 	Run: func(cmd *cobra.Command, args []string) {
-		p := tea.NewProgram(gui.New())
+		cfg := viper.GetViper().ConfigFileUsed()
+		cfgMap, err := kafka.FileToKafkaMap(cfg)
+		cobra.CheckErr(err)
+		client, err := kafka.New(cfgMap)
+		cobra.CheckErr(err)
+		p := tea.NewProgram(gui.New(client))
 		if _, err := p.Run(); err != nil {
 			fmt.Println("critical failure", err)
 			os.Exit(1)
@@ -77,9 +84,9 @@ func initConfig() {
 			home, err := os.UserHomeDir()
 			cobra.CheckErr(err)
 			// Search config in home directory with name ".kui" (without extension).
-			viper.AddConfigPath(home)
+			viper.AddConfigPath(path.Join(home, ".config"))
 			viper.SetConfigType("conf")
-			viper.SetConfigName(".kui")
+			viper.SetConfigName("kui")
 		}
 	}
 
