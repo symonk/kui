@@ -74,16 +74,13 @@ func initConfig() {
 		if p, ok := env.KeyIsInEnvironment(cfgEnvironLookupKey); ok {
 			viper.SetConfigFile(p)
 		} else {
-
+			home, err := os.UserHomeDir()
+			cobra.CheckErr(err)
+			// Search config in home directory with name ".kui" (without extension).
+			viper.AddConfigPath(home)
+			viper.SetConfigType("conf")
+			viper.SetConfigName(".kui")
 		}
-
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".kui" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigType("conf")
-		viper.SetConfigName(".kui")
 	}
 
 	// If a config file is found, read it in.
