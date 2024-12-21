@@ -21,18 +21,20 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/symonk/kui/internal/gui"
 )
+
+var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "kui",
-	Short: "A brief description of your application",
-	Long:  ``,
+	Short: "A terminal ui for manging kafka",
 	Run: func(cmd *cobra.Command, args []string) {
 		p := tea.NewProgram(gui.New())
 		if _, err := p.Run(); err != nil {
-			fmt.Println("error", err)
+			fmt.Println("critical failure", err)
 			os.Exit(1)
 		}
 	},
@@ -48,13 +50,30 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+	cobra.OnInitialize(initConfig)
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "c", "", "config file (default is $HOME/.config/kui.conf)")
+}
 
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.kui.yaml)")
+// initConfig reads in config file and ENV variables if set.
+func initConfig() {
+	if cfgFile != "" {
+		// Use config file from the flag.
+		viper.SetConfigFile(cfgFile)
+	} else {
+		// Find home directory.
+		home, err := os.UserHomeDir()
+		cobra.CheckErr(err)
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+		// Search config in home directory with name ".kui" (without extension).
+		viper.AddConfigPath(home)
+		viper.SetConfigType("conf")
+		viper.SetConfigName(".kui")
+	}
+
+	viper.AutomaticEnv() // read in environment variables that match
+
+	// If a config file is found, read it in.
+	if err := viper.ReadInConfig(); err == nil {
+		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	}
 }
