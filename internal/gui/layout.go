@@ -17,9 +17,14 @@ type AppModel struct {
 // New returns a new pointer to an AppModel instance configured for the
 // application.
 func New(client *kafka.Client) *AppModel {
+	choices := make([]string, 0)
+	topics := client.FetchTopics()
+	for _, topic := range topics {
+		choices = append(choices, topic.Topic)
+	}
 	return &AppModel{
 		client:   client,
-		choices:  []string{"One", "Two", "Three"},
+		choices:  choices,
 		selected: make(map[int]struct{}),
 	}
 }
