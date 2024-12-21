@@ -22,7 +22,14 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/symonk/kui/internal/env"
 	"github.com/symonk/kui/internal/gui"
+)
+
+const (
+	// cfgEnvironLookupKey is set to point at a config file and used
+	// if no explicit -c value is provided.
+	cfgEnvironLookupKey string = "KUI_CONFIG"
 )
 
 var cfgFile string
@@ -54,13 +61,22 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "c", "", "config file (default is $HOME/.config/kui.conf)")
 }
 
-// initConfig reads in config file and ENV variables if set.
+// initConfig attempts to resolve a configuration file of
+// librdkafka properties.  The order is as follows:
 func initConfig() {
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
+		// check if the user has $KUI_CONFIG exported in their environment
+		// if so, use it, otherwise look in the default config directory
+		// for a file
+		if p, ok := env.KeyIsInEnvironment(cfgEnvironLookupKey); ok {
+			viper.SetConfigFile(p)
+		} else {
+
+		}
+
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
@@ -69,8 +85,6 @@ func initConfig() {
 		viper.SetConfigType("conf")
 		viper.SetConfigName(".kui")
 	}
-
-	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
