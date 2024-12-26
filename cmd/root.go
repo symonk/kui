@@ -84,9 +84,8 @@ func initConfig() {
 			home, err := os.UserHomeDir()
 			cobra.CheckErr(err)
 			// Search config in home directory with name ".kui" (without extension).
-			viper.AddConfigPath(path.Join(home, ".config"))
-			viper.SetConfigType("conf")
-			viper.SetConfigName("kui")
+			p = path.Join(home, ".config", "kui.conf")
+			viper.SetConfigFile(p)
 		}
 	}
 
