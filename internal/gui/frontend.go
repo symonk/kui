@@ -5,29 +5,38 @@ import (
 	"github.com/symonk/kui/internal/kafka"
 )
 
+type View string
+
+const (
+	ConnectingView = "connecting"
+	MenuView       = "menu"
+)
+
 // Frontend encapsulates multiple composite views.
 // and is responsible for routing and delegating
 // updates to nested models.
 // Frontend tracks a stack of models where model[-1]
 // is the current model 'in view'.
 type Frontend struct {
-	client     *kafka.Client
-	connected  bool
-	modelStack []tea.Model
+	client    *kafka.Client
+	connected bool
+	router    map[string]tea.Model
+	visible   string
 }
 
 func New(client *kafka.Client) *Frontend {
 	return &Frontend{
-		client:     client,
-		connected:  false,
-		modelStack: []tea.Model{&Menu{}},
+		client:    client,
+		connected: false,
+		router:    map[string]tea.Model{ConnectingView: NewConnector(client)},
+		visible:   ConnectingView,
 	}
 
 }
 
 // Init establishes synchroous connectivity to the kafka brokers.
 func (f *Frontend) Init() tea.Cmd {
-	return kafkaConnectionCommand(f.client)
+	return f.router[f.visible].Init()
 }
 
 func (f *Frontend) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -40,30 +49,16 @@ func (f *Frontend) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case connMessage:
 		f.connected = bool(msg)
 		if !f.connected {
-			f.PushModel(&Menu{})
+			f.visible = ConnectingView
 		}
 	}
-	return f.modelStack[len(f.modelStack)-1].Update(msg)
-}
-
-// PopModel closes the view of a particular model, returning the
-// view to the one opened previously.
-func (f *Frontend) PopModel() {
-	if len(f.modelStack) > 1 {
-		f.modelStack = f.modelStack[:len(f.modelStack)-1]
-	}
-}
-
-// PushModel puts a new model into the view.
-func (f *Frontend) PushModel(m tea.Model) {
-	f.modelStack = append(f.modelStack, m)
+	return f.router[f.visible].Update(msg)
 }
 
 // View displays the currently active model.
 func (f *Frontend) View() string {
-	if f.connected == false {
-		c := &Connector{}
-		f.PushModel(c)
+	if f.connected {
+		f.visible = MenuView
 	}
-	return f.modelStack[len(f.modelStack)-1].View()
+	return f.router[f.visible].View()
 }

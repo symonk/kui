@@ -15,7 +15,6 @@ func kafkaConnectionCommand(client *kafka.Client) tea.Cmd {
 		if err := client.WaitForBrokerConnection(); err != nil {
 			return connMessage(false)
 		}
-		// return true later, test purposes at the moment.
-		return connMessage(false)
+		return connMessage(true)
 	}
 }
