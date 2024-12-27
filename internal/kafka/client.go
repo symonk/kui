@@ -7,7 +7,8 @@ import (
 )
 
 type Client struct {
-	client *kafka.AdminClient
+	client  *kafka.AdminClient
+	timeout int
 }
 
 // New instantiates a new instance of the kafka client and connects
@@ -34,6 +35,10 @@ func (c *Client) FetchTopics() []kafka.TopicMetadata {
 		t = append(t, v)
 	}
 	return t
+}
+
+func (c *Client) FetchMetaData() (*kafka.Metadata, error) {
+	return c.client.GetMetadata(nil, false, 2000)
 }
 
 func (c *Client) WaitForBrokerConnection() error {

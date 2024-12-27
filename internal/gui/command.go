@@ -2,6 +2,7 @@ package gui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	confluentKafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/symonk/kui/internal/kafka"
 )
 
@@ -22,10 +23,20 @@ func kafkaConnectionCommand(client *kafka.Client) tea.Cmd {
 	}
 }
 
-// kafkaTopicsCommand asynchronously fetches the current existing
-// kafka topics.
-func kafkaTopicsCommand(client *kafka.Client) tea.Cmd {
+type MetaData struct {
+	meta *confluentKafka.Metadata
+	err  error
+}
+
+// kafkaMetaDataCommand is asynchronously dispatched by bubble tea and performs
+// a cluster meta data fetch to kafka.  The meta data returned includes information
+// on the cluster, aswell as (all) topics, inclusive of internal ones.
+func kafkaMetaDataCommand(client *kafka.Client) tea.Cmd {
 	return func() tea.Msg {
-		return []string{"topic1", "topic2", "topic3"}
+		var m MetaData
+		meta, err := client.FetchMetaData()
+		m.meta = meta
+		m.err = err
+		return m
 	}
 }
