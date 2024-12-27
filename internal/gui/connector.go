@@ -58,7 +58,7 @@ func (c *Connector) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if c.connected && c.progress.Percent() == 1.0 {
 			c.message = "successfully connected"
 			c.connected = true
-			return c, nil
+			return NewMenu(c.client), nil
 		}
 		if !c.connected && c.progress.Percent() >= 0.9 {
 			c.message = "connection failing..."
