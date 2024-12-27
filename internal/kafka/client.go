@@ -37,7 +37,7 @@ func (c *Client) FetchTopics() []kafka.TopicMetadata {
 }
 
 func (c *Client) WaitForBrokerConnection() error {
-	if _, err := c.client.GetMetadata(nil, false, 5000); err != nil {
+	if _, err := c.client.GetMetadata(nil, false, 1000); err != nil {
 		return err
 	}
 	return nil

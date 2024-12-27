@@ -5,7 +5,10 @@ import (
 	"github.com/symonk/kui/internal/kafka"
 )
 
-type connMessage bool
+type connMessage struct {
+	ok  bool
+	err error
+}
 
 // KafkaConnectedCmd establishes connectivity to the kafka
 // cluster.  This state is ran on init in order to establish
@@ -13,8 +16,8 @@ type connMessage bool
 func kafkaConnectionCommand(client *kafka.Client) tea.Cmd {
 	return func() tea.Msg {
 		if err := client.WaitForBrokerConnection(); err != nil {
-			return connMessage(false)
+			return connMessage{ok: false, err: err}
 		}
-		return connMessage(true)
+		return connMessage{ok: true, err: nil}
 	}
 }

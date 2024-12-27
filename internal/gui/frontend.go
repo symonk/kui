@@ -22,6 +22,7 @@ type Frontend struct {
 	connected bool
 	router    map[string]tea.Model
 	visible   string
+	brokers   []string
 }
 
 func New(client *kafka.Client) *Frontend {
@@ -46,13 +47,9 @@ func (f *Frontend) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC.String():
 			return f, tea.Quit
 		}
-	case connMessage:
-		f.connected = bool(msg)
-		if !f.connected {
-			f.visible = ConnectingView
-		}
 	}
-	return f.router[f.visible].Update(msg)
+	mod, cmd := f.router[f.visible].Update(msg)
+	return mod, cmd
 }
 
 // View displays the currently active model.

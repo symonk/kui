@@ -2,6 +2,7 @@ package gui
 
 import tea "github.com/charmbracelet/bubbletea"
 
+// Menu is the core view of kui.
 type Menu struct{}
 
 func (m *Menu) View() string {
