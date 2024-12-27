@@ -62,7 +62,7 @@ func (c *Connector) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if !c.connected && c.progress.Percent() >= 0.9 {
 			c.message = "connection failing..."
-			cmd := c.progress.DecrPercent(0.2)
+			cmd := c.progress.DecrPercent(0.1)
 			return c, tea.Batch(tickCommand(), cmd)
 		}
 		cmd := c.progress.IncrPercent(0.1)
@@ -83,7 +83,7 @@ func (c *Connector) Init() tea.Cmd {
 }
 
 func tickCommand() tea.Cmd {
-	return tea.Tick(200*time.Millisecond, func(t time.Time) tea.Msg {
+	return tea.Tick(125*time.Millisecond, func(t time.Time) tea.Msg {
 		return tickMsg(t)
 	})
 }

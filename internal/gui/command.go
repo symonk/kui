@@ -21,3 +21,11 @@ func kafkaConnectionCommand(client *kafka.Client) tea.Cmd {
 		return connMessage{ok: true, err: nil}
 	}
 }
+
+// kafkaTopicsCommand asynchronously fetches the current existing
+// kafka topics.
+func kafkaTopicsCommand(client *kafka.Client) tea.Cmd {
+	return func() tea.Msg {
+		return []string{"topic1", "topic2", "topic3"}
+	}
+}
