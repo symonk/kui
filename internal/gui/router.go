@@ -1,6 +1,8 @@
 package gui
 
 import (
+	"log/slog"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/symonk/kui/internal/kafka"
 )
@@ -21,13 +23,15 @@ type Router struct {
 	client  *kafka.Client
 	router  map[string]tea.Model
 	visible string
+	logger  *slog.Logger
 }
 
-func New(client *kafka.Client) *Router {
+func New(client *kafka.Client, logger *slog.Logger) *Router {
 	return &Router{
 		client:  client,
 		router:  map[string]tea.Model{ConnectingView: NewConnector(client)},
 		visible: ConnectingView,
+		logger:  logger,
 	}
 
 }

@@ -16,16 +16,20 @@ limitations under the License.
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"log/slog"
 	"os"
 	"path"
 
 	tea "github.com/charmbracelet/bubbletea"
+	confluentKafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/symonk/kui/internal/env"
 	"github.com/symonk/kui/internal/gui"
 	"github.com/symonk/kui/internal/kafka"
+	"github.com/symonk/kui/internal/log"
 )
 
 const (
@@ -41,17 +45,65 @@ var rootCmd = &cobra.Command{
 	Use:   "kui",
 	Short: "A terminal ui for manging kafka",
 	Run: func(cmd *cobra.Command, args []string) {
+		logger := setupLogger()
+		logger.Info("starting kui...")
 		cfg := viper.GetViper().ConfigFileUsed()
 		cfgMap, err := kafka.FileToKafkaMap(cfg)
+		logCh := make(chan confluentKafka.LogEvent)
+		p := makeDummyProducer(&cfgMap, logCh)
+		defer p.Close()
 		cobra.CheckErr(err)
-		client, err := kafka.New(cfgMap)
+		// TODO: This is all horrible, but buggy in confluent kafka go right now.
+		// see the issue in the docstring of makeDummyProducer
+		client, err := kafka.New(p)
+		defer client.Close()
 		cobra.CheckErr(err)
-		p := tea.NewProgram(gui.New(client))
-		if _, err := p.Run(); err != nil {
+		done := make(chan struct{})
+		go func() {
+			redirectLogs(logger, logCh, done)
+		}()
+		defer close(done)
+		program := tea.NewProgram(gui.New(client, setupLogger()))
+		if _, err := program.Run(); err != nil {
 			fmt.Println("critical failure", err)
 			os.Exit(1)
 		}
 	},
+}
+
+// setupLogger configures an application logger, primarily used for debug purposes
+// but also outputs the kafka stderr stream.
+func setupLogger() *slog.Logger {
+	writer := bufio.NewWriter(os.Stderr)
+	handler := slog.NewJSONHandler(writer, &slog.HandlerOptions{Level: slog.LevelDebug})
+	l := log.New(handler)
+	return l
+}
+
+// redirectLogs asynchronously redirects kafka logs to the application logger.
+func redirectLogs(logger *slog.Logger, ch chan confluentKafka.LogEvent, done chan struct{}) {
+	for {
+		select {
+		case e := <-ch:
+			logger.Debug(e.Message)
+		case <-done:
+			return
+		}
+	}
+}
+
+// makeDummyProducer returns a dummy kafka producer as a work around for an issue with
+// providing a client supplied logger channel to the admin client.
+//
+// https://github.com/confluentinc/confluent-kafka-go/issues/1119
+func makeDummyProducer(cfgMap *confluentKafka.ConfigMap, logsChan chan confluentKafka.LogEvent) *confluentKafka.Producer {
+	cfgMap.SetKey("go.logs.channel.enable", true)
+	cfgMap.SetKey("go.logs.channel", logsChan)
+	p, err := confluentKafka.NewProducer(cfgMap)
+	if err != nil {
+		panic(err)
+	}
+	return p
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
