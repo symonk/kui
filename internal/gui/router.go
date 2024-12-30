@@ -26,10 +26,10 @@ type Router struct {
 	logger  *slog.Logger
 }
 
-func New(client *kafka.Client, logger *slog.Logger) *Router {
+func New(client *kafka.Client, logger *slog.Logger, logFile string) *Router {
 	return &Router{
 		client:  client,
-		router:  map[string]tea.Model{ConnectingView: NewConnector(client)},
+		router:  map[string]tea.Model{ConnectingView: NewConnector(client, logFile)},
 		visible: ConnectingView,
 		logger:  logger,
 	}

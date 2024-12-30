@@ -19,23 +19,25 @@ type Connector struct {
 	message   string
 	brokers   []string
 	connected bool
+	logFile   string
 }
 
-func NewConnector(client *kafka.Client) *Connector {
+func NewConnector(client *kafka.Client, logFile string) *Connector {
 	return &Connector{
 		client:   client,
 		progress: progress.New(progress.WithDefaultGradient()),
 		message:  "connecting to brokers",
 		brokers:  make([]string, 0),
+		logFile:  logFile,
 	}
 }
 
 func (c *Connector) View() string {
 	pad := strings.Repeat(" ", 2)
-	return "\n" + lipgloss.NewStyle().Bold(true).Padding(1).Width(50).Align(0, 0).
+	return "\n" + lipgloss.NewStyle().Bold(true).Padding(1).Width(80).Align(0, 0).
 		BorderStyle(lipgloss.RoundedBorder()).Align(lipgloss.Center).Render(fmt.Sprintf("  %s..\n\n", c.message)+
 		pad+c.progress.View()+"\n\n"+
-		pad+style.Render("Press 'q' to quit")) + "\n"
+		pad+style.Align(lipgloss.Center).Render("Press 'q' to quit\n log: ", c.logFile)) + "\n"
 }
 
 type tickMsg time.Time
@@ -60,8 +62,7 @@ func (c *Connector) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			c.connected = true
 			return NewMenu(c.client), nil
 		}
-		if !c.connected && c.progress.Percent() >= 0.9 {
-			c.message = "connection failing..."
+		if !c.connected && c.progress.Percent() >= 0.8 {
 			cmd := c.progress.DecrPercent(0.1)
 			return c, tea.Batch(tickCommand(), cmd)
 		}
@@ -83,7 +84,7 @@ func (c *Connector) Init() tea.Cmd {
 }
 
 func tickCommand() tea.Cmd {
-	return tea.Tick(125*time.Millisecond, func(t time.Time) tea.Msg {
+	return tea.Tick(200*time.Millisecond, func(t time.Time) tea.Msg {
 		return tickMsg(t)
 	})
 }

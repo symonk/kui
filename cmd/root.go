@@ -16,7 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"log/slog"
 	"os"
@@ -45,8 +44,9 @@ var rootCmd = &cobra.Command{
 	Use:   "kui",
 	Short: "A terminal ui for manging kafka",
 	Run: func(cmd *cobra.Command, args []string) {
-		logger := setupLogger()
-		logger.Info("starting kui...")
+		logger, path, closer := setupLogger()
+		defer closer()
+		logger.Info("starting kui...", path)
 		cfg := viper.GetViper().ConfigFileUsed()
 		cfgMap, err := kafka.FileToKafkaMap(cfg)
 		logCh := make(chan confluentKafka.LogEvent)
@@ -63,21 +63,27 @@ var rootCmd = &cobra.Command{
 			redirectLogs(logger, logCh, done)
 		}()
 		defer close(done)
-		program := tea.NewProgram(gui.New(client, setupLogger()))
+		program := tea.NewProgram(gui.New(client, logger, path))
 		if _, err := program.Run(); err != nil {
-			fmt.Println("critical failure", err)
-			os.Exit(1)
+			logger.Error("critical failure", slog.Any("reason", err))
 		}
 	},
 }
 
+type Closer func() error
+
 // setupLogger configures an application logger, primarily used for debug purposes
 // but also outputs the kafka stderr stream.
-func setupLogger() *slog.Logger {
-	writer := bufio.NewWriter(os.Stderr)
+func setupLogger() (*slog.Logger, string, Closer) {
+	tmpF := os.TempDir()
+	logFile := path.Join(tmpF, "kui.log")
+	writer, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
 	handler := slog.NewJSONHandler(writer, &slog.HandlerOptions{Level: slog.LevelDebug})
 	l := log.New(handler)
-	return l
+	return l, logFile, writer.Close
 }
 
 // redirectLogs asynchronously redirects kafka logs to the application logger.
@@ -85,8 +91,14 @@ func redirectLogs(logger *slog.Logger, ch chan confluentKafka.LogEvent, done cha
 	for {
 		select {
 		case e := <-ch:
-			logger.Debug(e.Message)
+			logger.Debug("kafka_log",
+				slog.String("name", e.Name),
+				slog.String("tag", e.Tag),
+				slog.String("message", e.Message),
+				slog.Int("level", int(e.Level)),
+				slog.Time("timestamp", e.Timestamp))
 		case <-done:
+			logger.Debug("exit signal, exiting")
 			return
 		}
 	}
