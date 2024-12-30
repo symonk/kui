@@ -3,6 +3,10 @@
 
 ## Quick Start
 
+`kui` is in the alpha stages right now and is slowing wiring up functionality and connectivity.
+Looks/theming is heavily subject to change and rapidly changing as I understand more about `bubbletea`
+and `bubbles` in general.
+
 
 -----
 

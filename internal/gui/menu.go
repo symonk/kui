@@ -21,30 +21,40 @@ var tabGap = tabStyle.BorderTop(false).BorderLeft(false).BorderRight(false)
 
 // Menu is the core view of kui.
 type Menu struct {
-	client    *kafka.Client
-	status    *StatusBar
-	connected bool
-	width     int
-	height    int
-	meta      *confluentKafka.Metadata
-	brokers   []*confluentKafka.BrokerMetadata
-	tabs      []string
+	client       *kafka.Client
+	status       *StatusBar
+	connected    bool
+	width        int
+	height       int
+	meta         *confluentKafka.Metadata
+	brokers      []*confluentKafka.BrokerMetadata
+	tabs         []string
+	topicsView   tea.Model
+	groupsView   tea.Model
+	settingsView tea.Model
+	configView   tea.Model
+	debugView    tea.Model
 }
 
 func NewMenu(client *kafka.Client) *Menu {
 	w, h, _ := term.GetSize(int(os.Stdout.Fd()))
-	return &Menu{client: client, status: NewStatusBar(client), width: w, height: h, tabs: []string{"Overview", "Topics", "Consumer Groups", "Settings", "Logs"}}
+	dView := NewDebugView()
+	return &Menu{
+		client:    client,
+		status:    NewStatusBar(client),
+		width:     w,
+		height:    h,
+		tabs:      []string{"Overview", "Topics", "Consumer Groups", "Settings"},
+		debugView: dView}
 }
 
 func (m *Menu) View() string {
 	var doc strings.Builder
-	row := lipgloss.JoinHorizontal(lipgloss.Top, activeTab.Render("Overview"), tabStyle.Render("Topics"), tabStyle.Render("Consumer Groups"), tabStyle.Render("Settings"), tabStyle.Render("Logs"), tabStyle.Render("Config"), tabStyle.Render("Debug"))
+	row := lipgloss.JoinHorizontal(lipgloss.Top, activeTab.Render("Overview"), tabStyle.Render("Topics"), tabStyle.Render("Consumer Groups"), tabStyle.Render("Settings"), tabStyle.Render("Config"), tabStyle.Render("Debug"))
 	gap := tabGap.Render(strings.Repeat(" ", max(0, m.width-lipgloss.Width(row))))
-	row = lipgloss.JoinHorizontal(lipgloss.Top, row, gap)
-	// TODO List them? Panel them?
-	s := lipgloss.NewStyle().Width(m.width / 2).Height(5).Padding(0).Margin(0).Border(lipgloss.RoundedBorder()).Align(lipgloss.Center).Render()
-	s2 := s
-	_, _ = doc.WriteString(row + "\n\n" + s + "\n\n" + s2 + "\n")
+	newRow := lipgloss.JoinHorizontal(lipgloss.Top, row, gap)
+	doc.WriteString(newRow + "\n\n")
+	doc.WriteString(m.debugView.View())
 	return doc.String() + m.status.View()
 }
 
@@ -61,6 +71,7 @@ func (m *Menu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.meta = msg.meta
 		return m, kafkaMetaDataCommand(m.client)
 	}
+	m.debugView.Update(msg)
 	return m, nil
 }
 

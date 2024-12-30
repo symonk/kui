@@ -46,7 +46,7 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		logger, path, closer := setupLogger()
 		defer closer()
-		logger.Info("starting kui...", path)
+		logger.Info("starting kui", slog.String("log_file", path))
 		cfg := viper.GetViper().ConfigFileUsed()
 		cfgMap, err := kafka.FileToKafkaMap(cfg)
 		logCh := make(chan confluentKafka.LogEvent)
