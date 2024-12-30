@@ -11,6 +11,7 @@ var debugTableStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("240"))
 
 var cols = []table.Column{
+	{Title: "ID", Width: 5},
 	{Title: "Level", Width: 10},
 	{Title: "Message", Width: 70},
 }
@@ -19,18 +20,18 @@ var cols = []table.Column{
 // io.writer and io.reader to supply a stream of debug logs visibile on
 // the frontend.
 var dummyRows = []table.Row{
-	{"INFO", "The quick brown fox jumps over the lazy dog"},
-	{"DEBUG", "The yellow cat jumps over the lazy dog"},
-	{"ERROR", "The white rabbit jumps over the lazy dog"},
-	{"WARN", "The buffalo went to the moon"},
-	{"INFO", "The quick brown fox jumps over the lazy dog"},
-	{"DEBUG", "The yellow cat jumps over the lazy dog"},
-	{"ERROR", "The white rabbit jumps over the lazy dog"},
-	{"WARN", "The buffalo went to the moon"},
-	{"INFO", "The quick brown fox jumps over the lazy dog"},
-	{"DEBUG", "The yellow cat jumps over the lazy dog"},
-	{"ERROR", "The white rabbit jumps over the lazy dog"},
-	{"WARN", "The buffalo went to the moon"},
+	{"1", "INFO", "The quick brown fox jumps over the lazy dog"},
+	{"2", "DEBUG", "The yellow cat jumps over the lazy dog"},
+	{"3", "ERROR", "The white rabbit jumps over the lazy dog"},
+	{"4", "WARN", "The buffalo went to the moon"},
+	{"5", "INFO", "The quick brown fox jumps over the lazy dog"},
+	{"6", "DEBUG", "The yellow cat jumps over the lazy dog"},
+	{"7", "ERROR", "The white rabbit jumps over the lazy dog"},
+	{"8", "WARN", "The buffalo went to the moon"},
+	{"9", "INFO", "The quick brown fox jumps over the lazy dog"},
+	{"10", "DEBUG", "The yellow cat jumps over the lazy dog"},
+	{"11", "ERROR", "The white rabbit jumps over the lazy dog"},
+	{"12", "WARN", "The buffalo went to the moon"},
 }
 
 // DebugView is a live trace of the current logging
@@ -50,6 +51,8 @@ var dummyRows = []table.Row{
 //
 // Lastly, additional styling should be added for consistency throughout
 // all tabs.
+//
+// Eventually, filtering would be a nice addition in here.
 type DebugView struct {
 	table table.Model
 }
@@ -65,8 +68,8 @@ func NewDebugView() *DebugView {
 		),
 	}
 	s := table.DefaultStyles()
-	s.Header = s.Header.BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("240")).BorderBottom(true).Bold(false)
-	s.Selected = s.Selected.Foreground(lipgloss.Color("229")).Background(lipgloss.Color("57")).Bold(false)
+	s.Header = s.Header.BorderStyle(lipgloss.ThickBorder()).BorderForeground(lipgloss.Color("240")).BorderBottom(true).Bold(true)
+	s.Selected = s.Selected.Foreground(lipgloss.Color("229")).Background(lipgloss.Color("57")).Bold(true)
 	dv.table.SetStyles(s)
 	return dv
 }
