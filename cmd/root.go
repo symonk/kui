@@ -63,8 +63,8 @@ var rootCmd = &cobra.Command{
 		// TODO: This is all horrible, but buggy in confluent kafka go right now.
 		// see the issue in the docstring of makeDummyProducer
 		client, err := kafka.New(p)
-		defer client.Close()
 		cobra.CheckErr(err)
+		defer client.Close()
 		done := make(chan struct{})
 		go func() {
 			redirectLogs(logger, logCh, done)
