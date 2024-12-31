@@ -136,7 +136,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "c", "", "config file (default is $HOME/.config/kui.conf)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/kui.conf)")
 }
 
 // initConfig attempts to resolve a configuration file of
@@ -168,7 +168,8 @@ func initConfig() {
 		sb.WriteString("or lastly, store the file in $HOME/.config/kui.conf\n\n")
 		sb.WriteString("The file provided should contain key=value pairs of librdkafka\n")
 		sb.WriteString("configuration options.  These can be found at:\n\n")
-		sb.WriteString("https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md")
+		sb.WriteString("https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md\n\n")
+		sb.WriteString(fmt.Sprintf("error reason: %s", err.Error()))
 		fmt.Fprintln(os.Stderr, sb.String())
 		os.Exit(CannotFindConfigFileExit)
 	}
