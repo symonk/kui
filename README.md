@@ -18,6 +18,6 @@ or alternatively read from the environment or a file on disk.  Configure `kui` v
  * passing `--config` on the command line to a config file with `librdkafka` properties.
  * passing `-p` (optionally multiple times) for `librdkafka` properties.
  * if `$KUI_CONFIG` is set in the environment, `kui` will look up that path.
- * finally, by default looking for a `~/.config/kui.conf`
+ * finally, by default looking for a `~/.config/kui.ini`
 
 -----
