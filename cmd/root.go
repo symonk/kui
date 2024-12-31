@@ -120,7 +120,7 @@ func makeDummyProducer(cfgMap *confluentKafka.ConfigMap, logsChan chan confluent
 	cfgMap.SetKey("go.logs.channel", logsChan)
 	p, err := confluentKafka.NewProducer(cfgMap)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("librdkafka error %s", err))
 	}
 	return p
 }
@@ -136,7 +136,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/kui.conf)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/kui.ini)")
 }
 
 // initConfig attempts to resolve a configuration file of
@@ -155,7 +155,7 @@ func initConfig() {
 			home, err := os.UserHomeDir()
 			cobra.CheckErr(err)
 			// Search config in home directory with name ".kui" (without extension).
-			p = path.Join(home, ".config", "kui.conf")
+			p = path.Join(home, ".config", "kui.ini")
 			viper.SetConfigFile(p)
 		}
 	}
@@ -165,7 +165,7 @@ func initConfig() {
 		sb.WriteString(fmt.Sprintf("Config file resolved `%s` could not be found.\n", viper.ConfigFileUsed()))
 		sb.WriteString("Export `KUI_CONFIG` env var with the absolute path or\n")
 		sb.WriteString("provide an absolute path to --config\n")
-		sb.WriteString("or lastly, store the file in $HOME/.config/kui.conf\n\n")
+		sb.WriteString("or lastly, store the file in $HOME/.config/kui.ini\n\n")
 		sb.WriteString("The file provided should contain key=value pairs of librdkafka\n")
 		sb.WriteString("configuration options.  These can be found at:\n\n")
 		sb.WriteString("https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md\n\n")
