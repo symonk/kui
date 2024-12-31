@@ -20,6 +20,7 @@ import (
 	"log/slog"
 	"os"
 	"path"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	confluentKafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -29,6 +30,12 @@ import (
 	"github.com/symonk/kui/internal/gui"
 	"github.com/symonk/kui/internal/kafka"
 	"github.com/symonk/kui/internal/log"
+)
+
+type exitCode = int
+
+const (
+	CannotFindConfigFileExit exitCode = 3
 )
 
 const (
@@ -153,6 +160,18 @@ func initConfig() {
 		}
 	}
 
+	if err := viper.ReadInConfig(); err != nil {
+		var sb strings.Builder
+		sb.WriteString(fmt.Sprintf("Config file resolved `%s` could not be found.\n", viper.ConfigFileUsed()))
+		sb.WriteString("Export `KUI_CONFIG` env var with the absolute path or\n")
+		sb.WriteString("provide an absolute path to --config\n")
+		sb.WriteString("or lastly, store the file in $HOME/.config/kui.conf\n\n")
+		sb.WriteString("The file provided should contain key=value pairs of librdkafka\n")
+		sb.WriteString("configuration options.  These can be found at:\n\n")
+		sb.WriteString("https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md")
+		fmt.Fprintln(os.Stderr, sb.String())
+		os.Exit(CannotFindConfigFileExit)
+	}
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())

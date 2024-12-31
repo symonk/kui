@@ -24,4 +24,5 @@ go.work.sum
 # env file
 .env
 dist/kui
+*kui
 __debug_bin*

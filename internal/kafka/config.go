@@ -19,13 +19,13 @@ import (
 // ignore such options that are not sufficient for the type we
 // have instantiated.
 func FileToKafkaMap(path string) (kafka.ConfigMap, error) {
+	c := kafka.ConfigMap{}
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return c, err
 	}
 	defer f.Close()
 
-	c := kafka.ConfigMap{}
 	s := bufio.NewScanner(f)
 	for s.Scan() {
 		l := strings.TrimSpace(s.Text())
@@ -36,7 +36,7 @@ func FileToKafkaMap(path string) (kafka.ConfigMap, error) {
 		c.SetKey(k, v)
 	}
 	if s.Err() != nil {
-		return nil, err
+		return c, err
 	}
 
 	return c, nil
