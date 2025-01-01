@@ -46,7 +46,7 @@ func (c *Connector) View() string {
 	message := lipgloss.NewStyle().Bold(true).Align(lipgloss.Center).Render(fmt.Sprintf("%s\n\n", c.message))
 	filePath := lipgloss.NewStyle().Align(lipgloss.Center).Render(fmt.Sprintf("log: %s\n", c.logFile))
 	darkStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#626262"))
-	quit := darkStyle.Render("press 'q' to quit")
+	quit := darkStyle.Render("press 'ctl+c' to quit")
 	progress := c.progress.View() + "\n\n"
 	ui := lipgloss.JoinVertical(lipgloss.Center, message, progress, filePath, quit)
 	box := lipgloss.Place(c.width, c.height, lipgloss.Center, lipgloss.Center, connectorStyle.Render(ui))
@@ -61,7 +61,7 @@ func (c *Connector) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		c.updateSize(msg)
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "q":
+		case tea.KeyCtrlC.String():
 			return c, tea.Quit
 		}
 	case connMessage:
