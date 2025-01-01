@@ -21,24 +21,19 @@ var tabGap = tabStyle.BorderTop(false).BorderLeft(false).BorderRight(false)
 
 // Menu is the core view of kui.
 type Menu struct {
-	client       *kafka.Client
-	status       *StatusBar
-	connected    bool
-	width        int
-	height       int
-	meta         *confluentKafka.Metadata
-	brokers      []*confluentKafka.BrokerMetadata
-	tabs         []string
-	topicsView   tea.Model
-	groupsView   tea.Model
-	settingsView tea.Model
-	configView   tea.Model
-	debugView    tea.Model
+	client    *kafka.Client
+	status    *StatusBar
+	width     int
+	height    int
+	meta      *confluentKafka.Metadata
+	brokers   []*confluentKafka.BrokerMetadata
+	tabs      []string
+	debugView tea.Model
 }
 
 func NewMenu(client *kafka.Client) *Menu {
 	w, h, _ := term.GetSize(int(os.Stdout.Fd()))
-	dView := NewDebugView()
+	dView := NewDebugView(w, h)
 	return &Menu{
 		client:    client,
 		status:    NewStatusBar(client),
@@ -70,6 +65,8 @@ func (m *Menu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case *MetaData:
 		m.meta = msg.meta
 		return m, kafkaMetaDataCommand(m.client)
+	case tea.WindowSizeMsg:
+		m.width, m.height = msg.Width, msg.Height
 	}
 	m.debugView.Update(msg)
 	return m, nil

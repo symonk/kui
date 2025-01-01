@@ -2,16 +2,14 @@ package gui
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/symonk/kui/internal/kafka"
+	"github.com/symonk/kui/internal/terminal"
 )
-
-var style = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262"))
 
 type Connector struct {
 	client    *kafka.Client
@@ -20,30 +18,47 @@ type Connector struct {
 	brokers   []string
 	connected bool
 	logFile   string
+	width     int
+	height    int
 }
 
+// NewConnector returns an instance of the Connector model.  The
+// Connector model instance is displayed on initial connection or
+// if the connection is dropped while the program is running.
 func NewConnector(client *kafka.Client, logFile string) *Connector {
+	width, height := terminal.Size()
 	return &Connector{
 		client:   client,
-		progress: progress.New(progress.WithDefaultGradient()),
+		progress: progress.New(progress.WithDefaultGradient(), progress.WithWidth(width/2)),
 		message:  "connecting to brokers",
 		brokers:  make([]string, 0),
 		logFile:  logFile,
+		width:    width,
+		height:   height,
 	}
 }
 
+// View returns the string responsible for drawing the view of the
+// connector window and any of it's internal composite components
+// concatennated appropriately.
 func (c *Connector) View() string {
-	pad := strings.Repeat(" ", 2)
-	return "\n" + lipgloss.NewStyle().Bold(true).Padding(1).Width(80).Align(0, 0).
-		BorderStyle(lipgloss.RoundedBorder()).Align(lipgloss.Center).Render(fmt.Sprintf("  %s..\n\n", c.message)+
-		pad+c.progress.View()+"\n\n"+
-		pad+style.Align(lipgloss.Center).Render("Press 'q' to quit\n log: ", c.logFile)) + "\n"
+	connectorStyle := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#874BFD")).Padding(1, 0)
+	message := lipgloss.NewStyle().Bold(true).Align(lipgloss.Center).Render(fmt.Sprintf("%s\n\n", c.message))
+	filePath := lipgloss.NewStyle().Align(lipgloss.Center).Render(fmt.Sprintf("log: %s\n", c.logFile))
+	darkStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#626262"))
+	quit := darkStyle.Render("press 'q' to quit")
+	progress := c.progress.View() + "\n\n"
+	ui := lipgloss.JoinVertical(lipgloss.Center, message, progress, filePath, quit)
+	box := lipgloss.Place(c.width, c.height, lipgloss.Center, lipgloss.Center, connectorStyle.Render(ui))
+	return box
 }
 
 type tickMsg time.Time
 
 func (c *Connector) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		c.updateSize(msg)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q":
@@ -59,7 +74,6 @@ func (c *Connector) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tickMsg:
 		if c.connected && c.progress.Percent() == 1.0 {
 			c.message = "successfully connected"
-			c.connected = true
 			return NewMenu(c.client), nil
 		}
 		if !c.connected && c.progress.Percent() >= 0.8 {
@@ -77,6 +91,13 @@ func (c *Connector) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 	return c, nil
 
+}
+
+// updateSize is responsible for scaling all components
+// when sizing events occur.
+func (c *Connector) updateSize(scale tea.WindowSizeMsg) {
+	c.width, c.height = scale.Width, scale.Height
+	c.progress.Width = scale.Width / 4
 }
 
 func (c *Connector) Init() tea.Cmd {

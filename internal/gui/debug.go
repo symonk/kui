@@ -54,18 +54,21 @@ var dummyRows = []table.Row{
 //
 // Eventually, filtering would be a nice addition in here.
 type DebugView struct {
-	table table.Model
+	table         table.Model
+	width, height int
 }
 
-func NewDebugView() *DebugView {
+func NewDebugView(width int, height int) *DebugView {
 	dv := &DebugView{
 		table: table.New(
 			table.WithFocused(true),
-			table.WithHeight(10),
-			table.WithWidth(80),
+			table.WithHeight(height),
+			table.WithWidth(width),
 			table.WithColumns(cols),
 			table.WithRows(dummyRows),
 		),
+		width:  width,
+		height: height,
 	}
 	s := table.DefaultStyles()
 	s.Header = s.Header.BorderStyle(lipgloss.ThickBorder()).BorderForeground(lipgloss.Color("240")).BorderBottom(true).Bold(true)
@@ -92,6 +95,8 @@ func (d *DebugView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return d, tea.Quit
 		case "enter":
 		}
+	case tea.WindowSizeMsg:
+		d.width, d.height = msg.Width, msg.Height
 	}
 	mod, cmd := d.table.Update(msg)
 	d.table = mod

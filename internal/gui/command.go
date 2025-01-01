@@ -17,7 +17,7 @@ type connMessage struct {
 func kafkaConnectionCommand(client *kafka.Client) tea.Cmd {
 	return func() tea.Msg {
 		if err := client.WaitForBrokerConnection(); err != nil {
-			return connMessage{ok: true, err: err}
+			return connMessage{ok: false, err: err}
 		}
 		return connMessage{ok: true, err: nil}
 	}
