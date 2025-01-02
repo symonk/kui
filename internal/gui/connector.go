@@ -11,6 +11,31 @@ import (
 	"github.com/symonk/kui/internal/terminal"
 )
 
+var (
+
+	// connectorStyle is the styling for the connector border.
+	// this is placed in the center of the users view.
+	connectorStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("#874BFD")).
+			Padding(1, 0)
+
+	// connectingMessageStyle is the styling for the current message
+	// including any kafka errors etc.
+	connectingMessageStyle = lipgloss.NewStyle().
+				Bold(true).
+				Align(lipgloss.Center)
+
+	// logFileMessageStyle is the styling for the log file text
+	logFileMessageStyle = lipgloss.NewStyle().
+				Align(lipgloss.Center)
+
+	// quitMessageStyle is the styling for the quit message
+	quitMessageStyle = lipgloss.NewStyle().
+				Align(lipgloss.Center).
+				Foreground(lipgloss.Color("#626262"))
+)
+
 type Connector struct {
 	client    *kafka.Client
 	progress  progress.Model
@@ -42,11 +67,9 @@ func NewConnector(client *kafka.Client, logFile string) *Connector {
 // connector window and any of it's internal composite components
 // concatennated appropriately.
 func (c *Connector) View() string {
-	connectorStyle := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#874BFD")).Padding(1, 0)
-	message := lipgloss.NewStyle().Bold(true).Align(lipgloss.Center).Render(fmt.Sprintf("%s\n\n", c.message))
-	filePath := lipgloss.NewStyle().Align(lipgloss.Center).Render(fmt.Sprintf("log: %s\n", c.logFile))
-	darkStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#626262"))
-	quit := darkStyle.Render("press 'ctl+c' to quit")
+	message := connectingMessageStyle.Render(fmt.Sprintf("%s\n\n", c.message))
+	filePath := logFileMessageStyle.Render(fmt.Sprintf("log: %s\n", c.logFile))
+	quit := quitMessageStyle.Render("press 'ctl+c' to quit")
 	progress := c.progress.View() + "\n\n"
 	ui := lipgloss.JoinVertical(lipgloss.Center, message, progress, filePath, quit)
 	box := lipgloss.Place(c.width, c.height, lipgloss.Center, lipgloss.Center, connectorStyle.Render(ui))
